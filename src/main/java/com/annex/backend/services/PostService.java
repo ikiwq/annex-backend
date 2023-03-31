@@ -66,7 +66,7 @@ public class PostService {
             result = result.replace(" ", "");
 
             String search = result.replace("#", "");
-            String searchHTML="<a id='tag-span' class='post-link' href=/tag/" + search + ">" + result + "</a>";
+            String searchHTML="<a id='tag-span' class='post-link' href=/search/%23" + search + ">" + result + "</a>";
 
             message = message.replace(result,searchHTML);
         }
@@ -365,7 +365,6 @@ public class PostService {
     @Transactional
     public ResponseEntity<List<PostResponse>> searchPosts(String text, int page, Instant startDate){
         Pageable pageable = PageRequest.of(page, 15);
-        System.out.println("text:" + text);
         List<Post> posts = postRepository.searchPosts(text, startDate, pageable);
         return new ResponseEntity<List<PostResponse>>(posts.stream().map(this::postToPostRes).collect(Collectors.toList()), HttpStatus.OK);
     }

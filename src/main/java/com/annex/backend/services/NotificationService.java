@@ -29,7 +29,7 @@ public class NotificationService {
         NotificationDto notificationDto = new NotificationDto();
 
         notificationDto.setText(notification.getText());
-        notificationDto.setImageUrl(propertiesService.backendAddress + "api/images" + notification.getImageUrl());
+        notificationDto.setImageUrl(propertiesService.backendAddress + "api/images/" + notification.getImageUrl());
         notificationDto.setToUrl(notification.getToUrl());
         notificationDto.setSeen(notification.isSeen());
 

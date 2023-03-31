@@ -1,6 +1,7 @@
 package com.annex.backend.controllers;
 
 import com.annex.backend.dto.PostResponse;
+import com.annex.backend.dto.SearchRequest;
 import com.annex.backend.dto.UserResponse;
 import com.annex.backend.services.PostService;
 import com.annex.backend.services.UserService;
@@ -23,10 +24,9 @@ public class SearchController {
     @Autowired
     UserService userService;
 
-    @GetMapping("/post/{postText}")
-    public ResponseEntity<List<PostResponse>> searchPosts(@RequestParam int page, @RequestParam Instant startDate, @PathVariable String postText){
-        System.out.println("text2: " + postText);
-        return postService.searchPosts(postText, page, startDate);
+    @PostMapping("/post/")
+    public ResponseEntity<List<PostResponse>> searchPosts(@RequestBody SearchRequest searchRequest){
+        return postService.searchPosts(searchRequest.getText(), searchRequest.getPage(), searchRequest.getStartDate());
     }
 
     @GetMapping("/user/{nickname}")

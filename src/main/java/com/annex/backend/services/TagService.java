@@ -50,7 +50,7 @@ public class TagService {
         TagDto newTagDto = new TagDto();
 
         newTagDto.setId(tag.getTagId());
-        newTagDto.setName(tag.getTagName());
+        newTagDto.setName("#" + tag.getTagName());
         newTagDto.setPostNumber(tag.getPostList().size());
 
         return newTagDto;

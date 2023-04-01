@@ -19,8 +19,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT us from User u join u.following fl JOIN fl.following us WHERE u = :user")
     List<User> findFollowed(User user);
 
-    @Query("SELECT u from User u WHERE u.username LIKE %:username% AND u.createdAt <= :createdAt")
-    List<User> searchUsers(String username, Instant createdAt, Pageable pageable);
+    @Query("SELECT u from User u WHERE u.username LIKE %:username%")
+    List<User> searchUsers(String username, Pageable pageable);
 
     Optional<User> findByEmail(String mail);
     Optional<User> findByUsername(String username);

@@ -7,6 +7,7 @@ import com.annex.backend.services.PostService;
 import com.annex.backend.services.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,12 +27,12 @@ public class SearchController {
 
     @PostMapping("/post/")
     public ResponseEntity<List<PostResponse>> searchPosts(@RequestBody SearchRequest searchRequest){
-        return postService.searchPosts(searchRequest.getText(), searchRequest.getPage(), searchRequest.getStartDate());
+        return new ResponseEntity<>(postService.searchPosts(searchRequest.getText(), searchRequest.getCursor(), searchRequest.getPageSize()), HttpStatus.OK);
     }
 
     @GetMapping("/user/{nickname}")
-    public ResponseEntity<List<UserResponse>> searchUser(@PathVariable String nickname, @RequestParam Instant startDate){
-        return userService.searchUsers(nickname, startDate);
+    public ResponseEntity<List<UserResponse>> searchUser(@PathVariable String nickname, @RequestParam int pageSize){
+        return userService.searchUsers(nickname, pageSize);
     }
 
 }

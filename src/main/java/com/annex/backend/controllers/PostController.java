@@ -25,31 +25,30 @@ public class PostController {
         return postService.save(jsonString, images);
     }
 
-    @GetMapping("/page/{page}")
-    public ResponseEntity<List<PostResponse>> getAllPosts(@PathVariable int page, @RequestParam Instant startingDate, @RequestParam(required = false) String tag){
-        if(tag != null){
-            return new ResponseEntity<List<PostResponse>>(postService.getPostsWithTag(tag, page, startingDate), HttpStatus.OK);
-        }
-        return new ResponseEntity<List<PostResponse>>(postService.getAllPosts(page, startingDate), HttpStatus.OK);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> getPost(@PathVariable Long id){
-        return new ResponseEntity<PostResponse>(postService.getPost(id), HttpStatus.OK);
+        return new ResponseEntity<>(postService.getPost(id), HttpStatus.OK);
     }
 
     @PostMapping("/{id}/reply")
     public ResponseEntity<PostResponse> reply(@PathVariable Long id, @RequestBody PostRequest replyRequest){
-        return new ResponseEntity<PostResponse>(postService.reply(replyRequest, id), HttpStatus.OK);
+        return new ResponseEntity<>(postService.reply(replyRequest, id), HttpStatus.OK);
     }
 
-    @GetMapping("/{id}/replies")
-    public ResponseEntity<List<PostResponse>> getReplies(@PathVariable Long id, @RequestParam int page, @RequestParam Instant startingDate){
-        return postService.getReplies(id, page, startingDate);
+    @GetMapping("/{id}/reply")
+    public ResponseEntity<List<PostResponse>> getReplies(@PathVariable Long id, @RequestParam Long cursor, @RequestParam int pageSize){
+        return new ResponseEntity<>(postService.getReplies(id, cursor, pageSize), HttpStatus.OK);
     }
 
     @GetMapping("/{id}/delete")
     public ResponseEntity<String> deletePost(@PathVariable Long id){
         return postService.deletePost(id);
     }
+
+    @GetMapping("/cursor/{cursor}")
+    public ResponseEntity<List<PostResponse>> getAllPosts(@PathVariable Long cursor, @RequestParam int pageSize){
+        System.out.println("cursor" + cursor);
+        return new ResponseEntity<>(postService.getAllPosts(cursor, pageSize), HttpStatus.OK);
+    }
+
 }

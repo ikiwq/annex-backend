@@ -2,6 +2,7 @@ package com.annex.backend.services;
 
 import com.annex.backend.dto.PostRequest;
 import com.annex.backend.dto.PostResponse;
+import com.annex.backend.dto.CursorPostsResponse;
 import com.annex.backend.models.*;
 import com.annex.backend.repositories.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -252,30 +253,6 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse getPost(Long id){
-        Post postFound = postRepository.findById(id).orElseThrow(()-> new IllegalStateException("Post not found!"));
-        return postToPostRes(postFound);
-    }
-
-    @Transactional
-    public List<PostResponse> getAllPosts(int page, Instant startDate){
-        Pageable pageable = PageRequest.of(page, 10);
-        if(SecurityContextHolder.getContext().getAuthentication().getPrincipal() != "anonymousUser"){
-            User user = userService.getCurrentUser();
-            return postRepository.findMostRecentPostsNotCreatedBy(startDate, user, pageable).stream().map(this::postToPostRes).collect(Collectors.toList());
-        }else{
-            return postRepository.findMostRecent(startDate, pageable).stream().map(this::postToPostRes).collect(Collectors.toList());
-        }
-    }
-
-    @Transactional
-    public  List<PostResponse> getPostsWithTag(String tag, int page, Instant startDate){
-        Pageable pageable = PageRequest.of(0, 15);
-        List<Post> postList = postRepository.findByTag(tag, startDate, pageable);
-        return postList.stream().map(this::postToPostRes).collect(Collectors.toList());
-    }
-
-    @Transactional
     public PostResponse reply(PostRequest replyRequest, Long replyingAt){
         Post reply = new Post();
         Post toReply = postRepository.findById(replyingAt).orElseThrow(()-> new RuntimeException("Post not found"));
@@ -295,13 +272,141 @@ public class PostService {
     }
 
     @Transactional
-    public ResponseEntity<List<PostResponse>> getReplies(Long id, int page, Instant startingDate){
-        Pageable pageable = PageRequest.of(page, 10);
+    public PostResponse getPost(Long id){
+        Post postFound = postRepository.findById(id).orElseThrow(()-> new IllegalStateException("Post not found!"));
+        return postToPostRes(postFound);
+    }
+
+    @Transactional
+    public List<PostResponse> getAllPosts(Long cursor, int pageSize){
+
+        if(cursor == -1){
+            Pageable pageable = PageRequest.of(0, 1);
+            cursor = postRepository.findAllMostRecents(pageable).get(0).getPostId();
+        }
+        Pageable pageable = PageRequest.of(0, pageSize);
+        if(SecurityContextHolder.getContext().getAuthentication().getPrincipal() != "anonymousUser"){
+            User user = userService.getCurrentUser();
+            return postRepository.findMostRecentsNotCreatedBy(cursor, user, pageable).stream().map(this::postToPostRes).collect(Collectors.toList());
+        }else{
+            return postRepository.findMostRecents(cursor, pageable).stream().map(this::postToPostRes).collect(Collectors.toList());
+        }
+    }
+
+    @Transactional
+    public List<PostResponse> getReplies(Long id, Long cursor, int pageSize){
         Post post = postRepository.findById(id).orElseThrow(()-> new RuntimeException("Post not found"));
+
+        if(cursor == -1){
+            Pageable pag = PageRequest.of(0, 1);
+            List<Post> cursorPosts = postRepository.findAllRepliesToPost(post, pag);
+            if(cursorPosts.size() == 0){
+                return new ArrayList<>();
+            }
+            cursor = cursorPosts.get(0).getPostId();
+        }
+
+        Pageable pageable = PageRequest.of(0, pageSize);
         List<PostResponse> posts = postRepository
-                .findAllByReplyingAtAndCreatedAtBeforeOrderByCreatedAtDesc(post, startingDate, pageable)
+                .findRepliesToPost(post, cursor, pageable)
                 .stream().map(this::postToPostRes).collect(Collectors.toList());
-        return new ResponseEntity<List<PostResponse>>(posts, HttpStatus.OK);
+        return posts;
+    }
+
+    @Transactional
+    public List<PostResponse> getPostsFromUser(String username, Long cursor, int pageSize){
+        User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
+        if(cursor == -1){
+            Pageable pag = PageRequest.of(0, 1);
+            List<Post> cursorPosts = postRepository.findAllByUserPag(user, pag);
+            if(cursorPosts.size() == 0){
+                return new ArrayList<>();
+            }
+            cursor = cursorPosts.get(0).getPostId();
+        }
+        Pageable pageable = PageRequest.of(0, pageSize);
+        List<PostResponse> posts = postRepository.findByUser(user, cursor, pageable)
+                .stream().map(this::postToPostRes).collect(Collectors.toList());
+        return posts;
+    }
+
+    @Transactional
+    public CursorPostsResponse getLikedFromUser(String username, Long cursor, int pageSize){
+        User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
+
+        CursorPostsResponse cursorPostsResponse = new CursorPostsResponse();
+
+        if(cursor == -1){
+            Pageable pag = PageRequest.of(0, 1);
+            List<LikeVote> cursorLikes = likeRepository.findAllByUserPag(user, pag);
+            if(cursorLikes.size() == 0){
+                cursorPostsResponse.setPosts(new ArrayList<>());
+                cursorPostsResponse.setCursor(1L);
+                return cursorPostsResponse;
+            }
+            cursor = cursorLikes.get(0).getLikeId();
+        }
+        Pageable pageable = PageRequest.of(0, pageSize);
+
+        List<LikeVote> likes = likeRepository.findAllByUser(user, cursor, pageable);
+        List<PostResponse> posts = likes.stream().map(LikeVote::getPost).toList().stream().map(this::postToPostRes).collect(Collectors.toList());
+
+        if(likes.size() == 0){
+            cursorPostsResponse.setCursor(1L);
+        }else{
+            cursorPostsResponse.setCursor(likes.get(likes.size()-1).getLikeId());
+        }
+
+        cursorPostsResponse.setPosts(posts);
+
+        return cursorPostsResponse;
+    }
+
+    @Transactional
+    public CursorPostsResponse getSavedFromUser(String username, Long cursor, int pageSize){
+        User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
+
+        CursorPostsResponse cursorPostsResponse = new CursorPostsResponse();
+
+        if(cursor == -1){
+            Pageable pag = PageRequest.of(0, 1);
+            List<Save> cursorSaves = saveRepository.findAllByUserPag(user, pag);
+            if(cursorSaves.size() == 0){
+                cursorPostsResponse.setPosts(new ArrayList<>());
+                cursorPostsResponse.setCursor(1L);
+                return cursorPostsResponse;
+            }
+            cursor = cursorSaves.get(0).getSaveId();
+        }
+        Pageable pageable = PageRequest.of(0, pageSize);
+
+        List<Save> saves = saveRepository.findAllByUser(user, cursor, pageable);
+
+        List<PostResponse> postSaves = saves.stream().map(Save::getPost).toList().stream().map(this::postToPostRes).collect(Collectors.toList());
+
+        if(saves.size() == 0){
+            cursorPostsResponse.setCursor(1L);
+        }else{
+            cursorPostsResponse.setCursor(saves.get(postSaves.size()-1).getSaveId());
+        }
+
+        cursorPostsResponse.setPosts(postSaves);
+        return cursorPostsResponse;
+    }
+
+    @Transactional
+    public List<PostResponse> searchPosts(String text, Long cursor, int pageSize){
+        if(cursor == -1){
+            Pageable pag = PageRequest.of(0, 1);
+            List<Post> cursorPosts = postRepository.findAllByMessagePag(text, pag);
+            if(cursorPosts.size() == 0){
+                return new ArrayList<>();
+            }
+            cursor = cursorPosts.get(0).getPostId();
+        }
+        Pageable pageable = PageRequest.of(0, pageSize);
+        List<Post> posts = postRepository.findAllByMessage(text, cursor, pageable);
+        return posts.stream().map(this::postToPostRes).collect(Collectors.toList());
     }
 
     @Transactional
@@ -331,42 +436,4 @@ public class PostService {
 
         return new ResponseEntity<String>("Removed", HttpStatus.OK);
     }
-
-    @Transactional
-    public ResponseEntity<List<PostResponse>> getPostsFromUser(String username, int page, Instant startingDate){
-        Pageable pageable = PageRequest.of(page, 10);
-        User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
-        List<PostResponse> posts = postRepository.findAllByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, pageable, startingDate)
-                .stream().map(this::postToPostRes).collect(Collectors.toList());
-        return new ResponseEntity<>(posts, HttpStatus.OK);
-    }
-
-    @Transactional
-    public ResponseEntity<List<PostResponse>> getLikedFromUser(String username, int page, Instant startingDate){
-        Pageable pageable = PageRequest.of(page, 10);
-
-        User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
-        List<Post> likes = likeRepository.findByUserOrderByCreatedAtDesc(user, pageable).stream().map(LikeVote::getPost).toList();
-
-        return new ResponseEntity<List<PostResponse>>(likes.stream().map(this::postToPostRes).collect(Collectors.toList()), HttpStatus.OK);
-    }
-
-    @Transactional
-    public ResponseEntity<List<PostResponse>> getSavedFromUser(String username, int page, Instant startingDate){
-        Pageable pageable = PageRequest.of(page, 10);
-        User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
-
-        List<Save> saves = saveRepository.findByUserOrderByCreatedAtDesc(user, pageable).orElseThrow(()-> new RuntimeException("Not found!"));
-
-        List<Post> postSaves = saves.stream().map(Save::getPost).toList();
-        return new ResponseEntity<List<PostResponse>>(postSaves.stream().map(this::postToPostRes).collect(Collectors.toList()), HttpStatus.OK);
-    }
-
-    @Transactional
-    public ResponseEntity<List<PostResponse>> searchPosts(String text, int page, Instant startDate){
-        Pageable pageable = PageRequest.of(page, 15);
-        List<Post> posts = postRepository.searchPosts(text, startDate, pageable);
-        return new ResponseEntity<List<PostResponse>>(posts.stream().map(this::postToPostRes).collect(Collectors.toList()), HttpStatus.OK);
-    }
-
 }

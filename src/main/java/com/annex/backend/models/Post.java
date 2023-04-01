@@ -63,4 +63,5 @@ public class Post {
 
     @OneToMany(mappedBy = "post")
     private List<Save> saveList;
+
 }

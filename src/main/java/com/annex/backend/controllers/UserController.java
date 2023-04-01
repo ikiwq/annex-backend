@@ -1,5 +1,6 @@
 package com.annex.backend.controllers;
 
+import com.annex.backend.dto.CursorPostsResponse;
 import com.annex.backend.dto.EditRequest;
 import com.annex.backend.dto.PostResponse;
 import com.annex.backend.dto.UserResponse;
@@ -51,17 +52,17 @@ public class UserController {
     }
 
     @GetMapping("/{username}/posts")
-    public ResponseEntity<List<PostResponse>> getPostsFromUser(@Valid @PathVariable String username, @RequestParam int page, @RequestParam Instant startingDate){
-        return postService.getPostsFromUser(username, page, startingDate);
+    public ResponseEntity<List<PostResponse>> getPostsFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int pageSize){
+        return new ResponseEntity<>(postService.getPostsFromUser(username, cursor, pageSize), HttpStatus.OK);
     }
 
     @GetMapping("/{username}/liked")
-    public ResponseEntity<List<PostResponse>> getLikedFromUser(@Valid @PathVariable String username, @RequestParam int page, @RequestParam Instant startingDate){
-        return postService.getLikedFromUser(username, page, startingDate);
+    public ResponseEntity<CursorPostsResponse> getLikedFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int pageSize){
+        return new ResponseEntity<>(postService.getLikedFromUser(username, cursor, pageSize), HttpStatus.OK);
     }
 
     @GetMapping("/{username}/saved")
-    public ResponseEntity<List<PostResponse>> getSavedFromUser(@Valid @PathVariable String username, @RequestParam int page, @RequestParam Instant startingDate){
-        return postService.getSavedFromUser(username, page, startingDate);
+    public ResponseEntity<CursorPostsResponse> getSavedFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int pageSize){
+        return new ResponseEntity<>(postService.getSavedFromUser(username, cursor, pageSize), HttpStatus.OK);
     }
 }

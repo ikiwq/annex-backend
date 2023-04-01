@@ -191,9 +191,9 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<List<UserResponse>> searchUsers(String username, Instant startDate){
-        Pageable pageable = PageRequest.of(0, 5);
-        List<User> users = userRepository.searchUsers(username, startDate, pageable);
+    public ResponseEntity<List<UserResponse>> searchUsers(String username, int pageSize){
+        Pageable pageable = PageRequest.of(0, pageSize);
+        List<User> users = userRepository.searchUsers(username, pageable);
         return new ResponseEntity<>(users.stream().map(this::userToUserDto).collect(Collectors.toList()), HttpStatus.OK);
     }
 

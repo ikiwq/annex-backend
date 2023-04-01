@@ -3,7 +3,6 @@ package com.annex.backend.services;
 import com.annex.backend.models.Image;
 import com.annex.backend.models.User;
 import com.annex.backend.repositories.ImageRepository;
-import com.annex.backend.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

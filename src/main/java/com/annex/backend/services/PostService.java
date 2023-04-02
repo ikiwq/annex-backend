@@ -164,7 +164,7 @@ public class PostService {
     }
 
     @Transactional
-    public ResponseEntity save(String jsonString, MultipartFile[] images){
+    public PostResponse save(String jsonString, MultipartFile[] images, Long replyingTo){
         ObjectMapper mapper = new ObjectMapper();
 
         Post newPost = new Post();
@@ -199,9 +199,6 @@ public class PostService {
                 result2 = result2.replace(" ", "");
                 String search = result2.replace("@", "");
                 users.add(search);
-                if(userRepository.findByUsername(search).isPresent()){
-
-                }
             }
 
             newPost.setMessage(message);
@@ -210,9 +207,18 @@ public class PostService {
         }
 
         newPost.setCreatedAt(Instant.now());
-
         newPost.setUser(userService.getCurrentUser());
-        newPost.setReply(false);
+
+        Post toReply = postRepository.findById(replyingTo).orElseThrow(()-> new RuntimeException("Post not found"));
+
+        if(replyingTo != -1){
+            if(toReply.getUser() != userService.getCurrentUser()){
+                newPost.setReplyingAt(toReply);
+                newPost.setReply(true);
+            }
+        }else{
+            newPost.setReply(false);
+        }
 
         if(images != null){
             Vector<String> imageUrls = new Vector<>();
@@ -238,7 +244,6 @@ public class PostService {
             }
 
             tagList.add(tag);
-
         }
 
         newPost.setTagList(tagList);
@@ -246,29 +251,20 @@ public class PostService {
         Post pubblishedPost = postRepository.save(newPost);
 
         for(String user : users){
-
+            Optional<User> reciever = userRepository.findByUsername(user);
+            if(reciever.isPresent()){
+                User recieverUser = reciever.get();
+                notificationService.createNotification(recieverUser, userService.getCurrentUser().getUsername() + "mentioned you in a post!",
+                        userService.getCurrentUser().getProfilePicture().getPath(), "/post/" + newPost.getPostId());
+            }
         }
 
-        return new ResponseEntity(postToPostRes(pubblishedPost), HttpStatus.CREATED);
-    }
+        if(replyingTo != -1){
+            notificationService.createNotification(toReply.getUser(), userService.getCurrentUser().getUsername() + " replied to your post!",
+                    userService.getCurrentUser().getProfilePicture().getPath(), "/post/" + pubblishedPost.getPostId());
+        }
 
-    @Transactional
-    public PostResponse reply(PostRequest replyRequest, Long replyingAt){
-        Post reply = new Post();
-        Post toReply = postRepository.findById(replyingAt).orElseThrow(()-> new RuntimeException("Post not found"));
-        reply.setReplyingAt(toReply);
-
-        reply.setMessage(replyRequest.getMessage());
-        reply.setUser(userService.getCurrentUser());
-        reply.setCreatedAt(Instant.now());
-        reply.setReply(true);
-
-        reply = postRepository.save(reply);
-
-        notificationService.createNotification(toReply.getUser(), userService.getCurrentUser().getUsername() + " replied to your post!",
-                propertiesService.backendAddress + "api/images/" + userService.getCurrentUser().getProfilePicture().getPath(), "/post/" + reply.getPostId());
-
-        return postToPostRes(reply);
+        return postToPostRes(pubblishedPost);
     }
 
     @Transactional

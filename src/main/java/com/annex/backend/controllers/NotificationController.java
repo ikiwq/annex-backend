@@ -1,9 +1,11 @@
 package com.annex.backend.controllers;
 
+import com.annex.backend.dto.CursorNotificationsResponse;
 import com.annex.backend.dto.NotificationDto;
 import com.annex.backend.services.NotificationService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +20,8 @@ public class NotificationController {
     NotificationService notificationService;
 
     @GetMapping("/")
-    public ResponseEntity<List<NotificationDto>> getUserNotification(@RequestParam int page, @RequestParam Instant openedAt){
-        return notificationService.getCurrentUserNotification(page, openedAt);
+    public ResponseEntity<CursorNotificationsResponse> getUserNotification(@RequestParam Long cursor, int pageSize){
+        return new ResponseEntity<>(notificationService.getCurrentUserNotification(cursor, pageSize), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

@@ -9,8 +9,8 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.annex</groupId>
-	<artifactId>backend</artifactId>
-	<version>0.1.1</version>
+	<artifactId>AnnexBackend</artifactId>
+	<version>0.2.0</version>
 	<name>AnnexBackend</name>
 	<description>Backend for annex</description>
 	<properties>

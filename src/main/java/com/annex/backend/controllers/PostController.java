@@ -21,8 +21,8 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("/")
-    public ResponseEntity createpost(@RequestPart(value = "images", required = false)MultipartFile[] images, @RequestPart String jsonString){
-        return postService.save(jsonString, images);
+    public ResponseEntity<PostResponse> createpost(@RequestPart(value = "images", required = false)MultipartFile[] images, @RequestPart String jsonString){
+        return new ResponseEntity<>(postService.save(jsonString, images, -1L), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -31,8 +31,8 @@ public class PostController {
     }
 
     @PostMapping("/{id}/reply")
-    public ResponseEntity<PostResponse> reply(@PathVariable Long id, @RequestBody PostRequest replyRequest){
-        return new ResponseEntity<>(postService.reply(replyRequest, id), HttpStatus.OK);
+    public ResponseEntity<PostResponse> reply(@PathVariable Long id, @RequestPart(value = "images", required = false)MultipartFile[] images, @RequestPart String jsonString){
+        return new ResponseEntity<>(postService.save(jsonString, images, id), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}/reply")

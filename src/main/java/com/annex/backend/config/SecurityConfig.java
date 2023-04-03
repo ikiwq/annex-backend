@@ -45,9 +45,12 @@ public class SecurityConfig{
                 .permitAll()
                 .antMatchers(HttpMethod.GET, "/api/search/**")
                 .permitAll()
+                .antMatchers(HttpMethod.POST, "/api/search/**")
+                .permitAll()
                 .anyRequest().authenticated();
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
         return http.build();
     }
 

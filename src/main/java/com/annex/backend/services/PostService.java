@@ -209,9 +209,10 @@ public class PostService {
         newPost.setCreatedAt(Instant.now());
         newPost.setUser(userService.getCurrentUser());
 
-        Post toReply = postRepository.findById(replyingTo).orElseThrow(()-> new RuntimeException("Post not found"));
+        Post toReply = null;
 
         if(replyingTo != -1){
+            toReply = postRepository.findById(replyingTo).orElseThrow(()-> new RuntimeException("Post not found"));
             if(toReply.getUser() != userService.getCurrentUser()){
                 newPost.setReplyingAt(toReply);
                 newPost.setReply(true);

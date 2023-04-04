@@ -93,9 +93,8 @@ public class UserService {
 
     @Transactional
     public ResponseEntity<UserResponse> getUserByToken(){
-        UserResponse userRes = new UserResponse();
         User user = userRepository.findByEmail(getCurrentUser().getEmail()).orElseThrow(()-> new RuntimeException("User not found"));
-        userRes = userToUserDto(user);
+        UserResponse userRes = userToUserDto(user);
         return new ResponseEntity<UserResponse>(userRes, HttpStatus.OK);
     }
 

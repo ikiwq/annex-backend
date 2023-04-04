@@ -18,10 +18,9 @@ public class JwtProvider {
 
     private final RsaKeyProperties rsaKeyProperties;
 
-    private static final int jwtExpirationMillis = 900000;
+    private static final int jwtExpirationMillis = 30000;
 
     public String generateToken(Authentication authentication){
-        System.out.println("generating");
         return Jwts
                 .builder().setSubject(authentication.getName())
                 .signWith(rsaKeyProperties.privateKey())

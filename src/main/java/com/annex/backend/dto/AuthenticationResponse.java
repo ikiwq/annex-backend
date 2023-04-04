@@ -10,8 +10,6 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthenticationResponse {
-    private String authToken;
-    private String refreshToken;
     private String mail;
     private Instant expiresAt;
 }

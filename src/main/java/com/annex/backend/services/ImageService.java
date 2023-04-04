@@ -30,7 +30,6 @@ public class ImageService {
     @Transactional
     public Image uploadImageWithoutUser(MultipartFile image){
         Image newImage = new Image();
-        System.out.println(image.getContentType());
         if (!image.getContentType().split("/")[0].equals("image")) {
             throw new RuntimeException("File is not an image");
         }
@@ -42,7 +41,7 @@ public class ImageService {
             newImage.setUplaodedAt(Instant.now());
 
         } catch (Exception e) {
-            System.out.println(e);
+            throw new RuntimeException(e);
         }
 
         return imageRepository.save(newImage);
@@ -51,7 +50,6 @@ public class ImageService {
     @Transactional
     public Image uploadImage(MultipartFile image, User uploader) {
         Image newImage = new Image();
-        System.out.println(image.getContentType());
         if (!image.getContentType().split("/")[0].equals("image")) {
             throw new RuntimeException("File is not an image");
         }
@@ -64,7 +62,7 @@ public class ImageService {
             newImage.setUplaodedAt(Instant.now());
 
         } catch (Exception e) {
-            System.out.println(e);
+            throw new RuntimeException(e);
         }
 
         return imageRepository.save(newImage);

@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.time.Instant;
 
 @Service
@@ -100,14 +102,14 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    public ResponseEntity login(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity login(@RequestBody LoginRequest loginRequest, HttpServletResponse httpServletResponse){
 
         UsernamePasswordAuthenticationToken userToLog =
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsercred(), loginRequest.getPassword());
 
         Authentication authentication = null;
 
-        if(!userRepository.findByUsername(loginRequest.getUsercred()).isPresent() && !userRepository.findByEmail(loginRequest.getUsercred()).isPresent()){
+        if(userRepository.findByUsername(loginRequest.getUsercred()).isEmpty() && userRepository.findByEmail(loginRequest.getUsercred()).isEmpty()){
             return new ResponseEntity<String>("User does not exist!", HttpStatus.BAD_REQUEST);
         }
 
@@ -124,25 +126,18 @@ public class AuthService {
 
         AuthenticationResponse newAuth = new AuthenticationResponse();
 
-        newAuth.setAuthToken(AuthToken);
-        newAuth.setRefreshToken(refreshTokenService.generateRefreshToken().getToken());
+        Cookie authCookie = new Cookie("annex.auth", AuthToken);
+        authCookie.setHttpOnly(true);
+        httpServletResponse.addCookie(authCookie);
+
+        Cookie refreshCookie = new Cookie("annex.refresh", refreshTokenService.generateRefreshToken(authentication.getName()).getToken());
+        refreshCookie.setHttpOnly(true);
+        httpServletResponse.addCookie(refreshCookie);
+
         newAuth.setExpiresAt(Instant.now().plusMillis(900000));
         newAuth.setMail(authentication.getName());
 
         return new ResponseEntity<AuthenticationResponse>(newAuth, HttpStatus.OK);
     }
 
-    @Transactional
-    public ResponseEntity<AuthenticationResponse> refreshToken(RefreshTokenRequest refreshTokenRequest){
-        refreshTokenService.validateRefreshToken(refreshTokenRequest.getRefreshToken());
-        String authToken = jwtProvider.generateTokenWithMail(refreshTokenRequest.getMail());
-        AuthenticationResponse newAuth = new AuthenticationResponse();
-
-        newAuth.setAuthToken(authToken);
-        newAuth.setRefreshToken(refreshTokenService.generateRefreshToken().getToken());
-        newAuth.setMail(refreshTokenRequest.getMail());
-        newAuth.setExpiresAt(Instant.now().plusMillis(900000));
-
-        return new ResponseEntity<AuthenticationResponse>(newAuth, HttpStatus.OK);
-    }
 }

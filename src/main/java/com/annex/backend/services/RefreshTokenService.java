@@ -17,18 +17,19 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
-    public RefreshToken generateRefreshToken(){
+    public RefreshToken generateRefreshToken(String mail){
         RefreshToken refreshToken = new RefreshToken();
 
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setCreatedAt(Instant.now());
+        refreshToken.setMail(mail);
 
         return refreshTokenRepository.save(refreshToken);
     }
 
     @Transactional
-    void validateRefreshToken(String token){
-        refreshTokenRepository.findByToken(token)
+    public RefreshToken validateRefreshToken(String token){
+        return refreshTokenRepository.findByToken(token)
                 .orElseThrow(()-> new IllegalStateException("Invalid refresh Token"));
     }
 

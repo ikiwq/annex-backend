@@ -19,5 +19,6 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long refreshTokenId;
     private String token;
+    private String mail;
     private Instant createdAt;
 }

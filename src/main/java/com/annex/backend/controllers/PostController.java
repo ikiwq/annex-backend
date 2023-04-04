@@ -47,7 +47,6 @@ public class PostController {
 
     @GetMapping("/cursor/{cursor}")
     public ResponseEntity<List<PostResponse>> getAllPosts(@PathVariable Long cursor, @RequestParam int pageSize){
-        System.out.println("cursor" + cursor);
         return new ResponseEntity<>(postService.getAllPosts(cursor, pageSize), HttpStatus.OK);
     }
 

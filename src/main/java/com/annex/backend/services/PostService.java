@@ -57,21 +57,6 @@ public class PostService {
 
         String message = post.getMessage();
 
-        String patternStr = "(?:\\s|\\A)#+([A-Za-z0-9-_]+)";
-        Pattern pattern = Pattern.compile(patternStr);
-        Matcher matcher = pattern.matcher(message);
-        String result = "";
-
-        while (matcher.find()) {
-            result = matcher.group();
-            result = result.replace(" ", "");
-
-            String search = result.replace("#", "");
-            String searchHTML="<a id='tag-span' class='post-link' href=/search/%23" + search + ">" + result + "</a>";
-
-            message = message.replace(result,searchHTML);
-        }
-
         String patternStr2 = "(?:\\s|\\A)@+([A-Za-z0-9-_]+)";
         Pattern pattern2 = Pattern.compile(patternStr2);
         Matcher matcher2 = pattern2.matcher(message);
@@ -81,9 +66,8 @@ public class PostService {
             result2 = matcher2.group();
             result2 = result2.replace(" ", "");
             String search = result2.replace("@", "");
-            if(userRepository.findByUsername(search).isPresent()){
-                String searchHTML="<a id='mention-span' class='post-link' href=/profile/" + search + ">" + result2 + "</a>";
-                message = message.replace(result2,searchHTML);
+            if(userRepository.findByUsername(search).isEmpty()){
+                message = message.replace(result2, search);
             }
         }
 
@@ -202,8 +186,8 @@ public class PostService {
             }
 
             newPost.setMessage(message);
-        }catch (Exception e){
-            System.out.println(e.getMessage());
+        }catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         newPost.setCreatedAt(Instant.now());

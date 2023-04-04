@@ -16,12 +16,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.Instant;
 
@@ -140,4 +142,35 @@ public class AuthService {
         return new ResponseEntity<AuthenticationResponse>(newAuth, HttpStatus.OK);
     }
 
+    public ResponseEntity logout(HttpServletRequest request, HttpServletResponse response){
+        Cookie[] cookies = request.getCookies();
+
+        Cookie refreshCookie = null;
+        Cookie authCookie = null;
+
+        if(cookies != null && cookies.length > 0){
+            for (Cookie temp : cookies){
+                if("annex.refresh".equals(temp.getName())){
+                    refreshCookie = temp;
+                }
+                if("annex.auth".equals(temp.getName())){
+                    authCookie = temp;
+                }
+            }
+        }
+
+        if(refreshCookie != null){
+            refreshTokenService.deleteRefreshToken(refreshCookie.getValue());
+            refreshCookie.setMaxAge(0);
+            refreshCookie.setValue("");
+            response.addCookie(refreshCookie);
+        }
+        if(authCookie != null){
+            authCookie.setMaxAge(0);
+            authCookie.setValue("");
+            response.addCookie(authCookie);
+        }
+
+        return new ResponseEntity("Logged out!", HttpStatus.OK);
+    }
 }

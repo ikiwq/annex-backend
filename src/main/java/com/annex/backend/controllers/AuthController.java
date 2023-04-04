@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
@@ -39,9 +40,9 @@ public class AuthController {
     }
 
     @GetMapping("/logout")
-    public ResponseEntity<String> logout(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest){
-        refreshTokenService.deleteRefreshToken(refreshTokenRequest.getRefreshToken());
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response){
+        System.out.println("logout!");
+        return authService.logout(request, response);
     }
 
     @GetMapping("/getCurrentUser")

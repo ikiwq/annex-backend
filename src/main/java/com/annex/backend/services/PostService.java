@@ -1,8 +1,8 @@
 package com.annex.backend.services;
 
+import com.annex.backend.dto.CursorPostsResponse;
 import com.annex.backend.dto.PostRequest;
 import com.annex.backend.dto.PostResponse;
-import com.annex.backend.dto.CursorPostsResponse;
 import com.annex.backend.models.*;
 import com.annex.backend.repositories.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -127,17 +127,9 @@ public class PostService {
         if(SecurityContextHolder.getContext().getAuthentication().getPrincipal() != "anonymousUser"){
             User currentUser = userService.getCurrentUser();
 
-            if(likeRepository.findByUserAndPost(currentUser, post).isPresent()){
-                postResponse.setLiked(true);
-            }else{
-                postResponse.setLiked(false);
-            }
+            postResponse.setLiked(likeRepository.findByUserAndPost(currentUser, post).isPresent());
 
-            if(saveRepository.findByUserAndPost(currentUser, post).isPresent()){
-                postResponse.setSaved(true);
-            }else{
-                postResponse.setSaved(false);
-            }
+            postResponse.setSaved(saveRepository.findByUserAndPost(currentUser, post).isPresent());
 
         }else{
             postResponse.setLiked(false);
@@ -148,7 +140,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse save(String jsonString, MultipartFile[] images, Long replyingTo){
+    public PostResponse save(String jsonString, MultipartFile[] images, Long replying_to){
         ObjectMapper mapper = new ObjectMapper();
 
         Post newPost = new Post();
@@ -195,8 +187,8 @@ public class PostService {
 
         Post toReply = null;
 
-        if(replyingTo != -1){
-            toReply = postRepository.findById(replyingTo).orElseThrow(()-> new RuntimeException("Post not found"));
+        if(replying_to != -1){
+            toReply = postRepository.findById(replying_to).orElseThrow(()-> new RuntimeException("Post not found"));
             if(toReply.getUser() != userService.getCurrentUser()){
                 newPost.setReplyingAt(toReply);
                 newPost.setReply(true);
@@ -215,7 +207,7 @@ public class PostService {
             newPost.setImageUrls(imageUrls);
         }
 
-        List<Tag> tagList = new ArrayList<>();
+        List<Tag> tag_list = new ArrayList<>();
 
         for(String hash : hashtags){
             Tag tag = null;
@@ -228,28 +220,28 @@ public class PostService {
                 tag = tagRepository.findByTagName(hash).get();
             }
 
-            tagList.add(tag);
+            tag_list.add(tag);
         }
 
-        newPost.setTagList(tagList);
+        newPost.setTagList(tag_list);
 
-        Post pubblishedPost = postRepository.save(newPost);
+        Post publishedPost = postRepository.save(newPost);
 
         for(String user : users){
-            Optional<User> reciever = userRepository.findByUsername(user);
-            if(reciever.isPresent()){
-                User recieverUser = reciever.get();
-                notificationService.createNotification(recieverUser, userService.getCurrentUser().getUsername() + "mentioned you in a post!",
+            Optional<User> receiver = userRepository.findByUsername(user);
+            if(receiver.isPresent()){
+                User receiverUser = receiver.get();
+                notificationService.createNotification(receiverUser, userService.getCurrentUser().getUsername() + "mentioned you in a post!",
                         userService.getCurrentUser().getProfilePicture().getPath(), "/post/" + newPost.getPostId());
             }
         }
 
-        if(replyingTo != -1){
+        if(replying_to != -1){
             notificationService.createNotification(toReply.getUser(), userService.getCurrentUser().getUsername() + " replied to your post!",
-                    userService.getCurrentUser().getProfilePicture().getPath(), "/post/" + pubblishedPost.getPostId());
+                    userService.getCurrentUser().getProfilePicture().getPath(), "/post/" + publishedPost.getPostId());
         }
 
-        return postToPostRes(pubblishedPost);
+        return postToPostRes(publishedPost);
     }
 
     @Transactional
@@ -259,13 +251,13 @@ public class PostService {
     }
 
     @Transactional
-    public List<PostResponse> getAllPosts(Long cursor, int pageSize){
+    public List<PostResponse> getAllPosts(Long cursor, int page_size){
 
         if(cursor == -1){
             Pageable pageable = PageRequest.of(0, 1);
-            cursor = postRepository.findAllMostRecents(pageable).get(0).getPostId();
+            cursor = postRepository.findAllMostRecents(pageable).get(0).getPostId() + 1;
         }
-        Pageable pageable = PageRequest.of(0, pageSize);
+        Pageable pageable = PageRequest.of(0, page_size);
         if(SecurityContextHolder.getContext().getAuthentication().getPrincipal() != "anonymousUser"){
             User user = userService.getCurrentUser();
             return postRepository.findMostRecentsNotCreatedBy(cursor, user, pageable).stream().map(this::postToPostRes).collect(Collectors.toList());
@@ -275,7 +267,7 @@ public class PostService {
     }
 
     @Transactional
-    public List<PostResponse> getReplies(Long id, Long cursor, int pageSize){
+    public List<PostResponse> getReplies(Long id, Long cursor, int page_size){
         Post post = postRepository.findById(id).orElseThrow(()-> new RuntimeException("Post not found"));
 
         if(cursor == -1){
@@ -284,18 +276,17 @@ public class PostService {
             if(cursorPosts.size() == 0){
                 return new ArrayList<>();
             }
-            cursor = cursorPosts.get(0).getPostId();
+            cursor = cursorPosts.get(0).getPostId() + 1;
         }
 
-        Pageable pageable = PageRequest.of(0, pageSize);
-        List<PostResponse> posts = postRepository
+        Pageable pageable = PageRequest.of(0, page_size);
+        return postRepository
                 .findRepliesToPost(post, cursor, pageable)
                 .stream().map(this::postToPostRes).collect(Collectors.toList());
-        return posts;
     }
 
     @Transactional
-    public List<PostResponse> getPostsFromUser(String username, Long cursor, int pageSize){
+    public List<PostResponse> getPostsFromUser(String username, Long cursor, int page_size){
         User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
         if(cursor == -1){
             Pageable pag = PageRequest.of(0, 1);
@@ -303,16 +294,15 @@ public class PostService {
             if(cursorPosts.size() == 0){
                 return new ArrayList<>();
             }
-            cursor = cursorPosts.get(0).getPostId();
+            cursor = cursorPosts.get(0).getPostId() + 1;
         }
-        Pageable pageable = PageRequest.of(0, pageSize);
-        List<PostResponse> posts = postRepository.findByUser(user, cursor, pageable)
+        Pageable pageable = PageRequest.of(0, page_size);
+        return postRepository.findByUser(user, cursor, pageable)
                 .stream().map(this::postToPostRes).collect(Collectors.toList());
-        return posts;
     }
 
     @Transactional
-    public CursorPostsResponse getLikedFromUser(String username, Long cursor, int pageSize){
+    public CursorPostsResponse getLikedFromUser(String username, Long cursor, int page_size){
         User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
 
         CursorPostsResponse cursorPostsResponse = new CursorPostsResponse();
@@ -325,9 +315,9 @@ public class PostService {
                 cursorPostsResponse.setCursor(1L);
                 return cursorPostsResponse;
             }
-            cursor = cursorLikes.get(0).getLikeId();
+            cursor = cursorLikes.get(0).getLikeId() + 1;
         }
-        Pageable pageable = PageRequest.of(0, pageSize);
+        Pageable pageable = PageRequest.of(0, page_size);
 
         List<LikeVote> likes = likeRepository.findAllByUser(user, cursor, pageable);
         List<PostResponse> posts = likes.stream().map(LikeVote::getPost).toList().stream().map(this::postToPostRes).collect(Collectors.toList());
@@ -344,7 +334,7 @@ public class PostService {
     }
 
     @Transactional
-    public CursorPostsResponse getSavedFromUser(String username, Long cursor, int pageSize){
+    public CursorPostsResponse getSavedFromUser(String username, Long cursor, int page_size){
         User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("User not found!"));
 
         CursorPostsResponse cursorPostsResponse = new CursorPostsResponse();
@@ -357,9 +347,9 @@ public class PostService {
                 cursorPostsResponse.setCursor(1L);
                 return cursorPostsResponse;
             }
-            cursor = cursorSaves.get(0).getSaveId();
+            cursor = cursorSaves.get(0).getSaveId() + 1;
         }
-        Pageable pageable = PageRequest.of(0, pageSize);
+        Pageable pageable = PageRequest.of(0, page_size);
 
         List<Save> saves = saveRepository.findAllByUser(user, cursor, pageable);
 
@@ -376,16 +366,16 @@ public class PostService {
     }
 
     @Transactional
-    public List<PostResponse> searchPosts(String text, Long cursor, int pageSize){
+    public List<PostResponse> searchPosts(String text, Long cursor, int page_size){
         if(cursor == -1){
             Pageable pag = PageRequest.of(0, 1);
             List<Post> cursorPosts = postRepository.findAllByMessagePag(text, pag);
             if(cursorPosts.size() == 0){
                 return new ArrayList<>();
             }
-            cursor = cursorPosts.get(0).getPostId();
+            cursor = cursorPosts.get(0).getPostId() + 1;
         }
-        Pageable pageable = PageRequest.of(0, pageSize);
+        Pageable pageable = PageRequest.of(0, page_size);
         List<Post> posts = postRepository.findAllByMessage(text, cursor, pageable);
         return posts.stream().map(this::postToPostRes).collect(Collectors.toList());
     }

@@ -1,23 +1,22 @@
 package com.annex.backend.services;
 
 import com.annex.backend.dto.CursorNotificationsResponse;
-import com.annex.backend.dto.CursorPostsResponse;
 import com.annex.backend.dto.NotificationDto;
 import com.annex.backend.models.Notification;
 import com.annex.backend.models.User;
 import com.annex.backend.repositories.NotificationRepository;
 import lombok.AllArgsConstructor;
+import org.ocpsoft.prettytime.PrettyTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +36,9 @@ public class NotificationService {
         notificationDto.setImageUrl(propertiesService.backendAddress + "api/images/" + notification.getImageUrl());
         notificationDto.setToUrl(notification.getToUrl());
         notificationDto.setSeen(notification.isSeen());
+
+        PrettyTime prettyTime = new PrettyTime();
+        notificationDto.setCreatedAt(prettyTime.format(Date.from(notification.getCreatedAt())));
 
         return notificationDto;
     }

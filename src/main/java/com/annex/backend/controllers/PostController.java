@@ -45,9 +45,9 @@ public class PostController {
         return postService.deletePost(id);
     }
 
-    @GetMapping("/cursor/{cursor}")
-    public ResponseEntity<List<PostResponse>> getAllPosts(@PathVariable Long cursor, @RequestParam int pageSize){
-        return new ResponseEntity<>(postService.getAllPosts(cursor, pageSize), HttpStatus.OK);
+    @GetMapping("/all")
+    public ResponseEntity<List<PostResponse>> getAllPosts(@RequestParam Long cursor, @RequestParam int page_size){
+        return new ResponseEntity<>(postService.getAllPosts(cursor, page_size), HttpStatus.OK);
     }
 
 }

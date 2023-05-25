@@ -1,10 +1,8 @@
 package com.annex.backend.controllers;
 
 import com.annex.backend.dto.CursorPostsResponse;
-import com.annex.backend.dto.EditRequest;
 import com.annex.backend.dto.PostResponse;
 import com.annex.backend.dto.UserResponse;
-import com.annex.backend.models.User;
 import com.annex.backend.services.PostService;
 import com.annex.backend.services.UserService;
 import lombok.AllArgsConstructor;
@@ -14,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
-import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -52,17 +49,19 @@ public class UserController {
     }
 
     @GetMapping("/{username}/posts")
-    public ResponseEntity<List<PostResponse>> getPostsFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int pageSize){
-        return new ResponseEntity<>(postService.getPostsFromUser(username, cursor, pageSize), HttpStatus.OK);
+    public ResponseEntity<List<PostResponse>> getPostsFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int page_size){
+        return new ResponseEntity<>(postService.getPostsFromUser(username, cursor, page_size), HttpStatus.OK);
     }
 
     @GetMapping("/{username}/liked")
-    public ResponseEntity<CursorPostsResponse> getLikedFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int pageSize){
-        return new ResponseEntity<>(postService.getLikedFromUser(username, cursor, pageSize), HttpStatus.OK);
+    public ResponseEntity<CursorPostsResponse> getLikedFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int page_size){
+        System.out.println("liked, " + cursor);
+        return new ResponseEntity<>(postService.getLikedFromUser(username, cursor, page_size), HttpStatus.OK);
     }
 
     @GetMapping("/{username}/saved")
-    public ResponseEntity<CursorPostsResponse> getSavedFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int pageSize){
-        return new ResponseEntity<>(postService.getSavedFromUser(username, cursor, pageSize), HttpStatus.OK);
+    public ResponseEntity<CursorPostsResponse> getSavedFromUser(@Valid @PathVariable String username, @RequestParam Long cursor, @RequestParam int page_size){
+        System.out.println(cursor);
+        return new ResponseEntity<>(postService.getSavedFromUser(username, cursor, page_size), HttpStatus.OK);
     }
 }

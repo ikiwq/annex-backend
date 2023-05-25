@@ -14,7 +14,7 @@ public interface SaveRepository extends JpaRepository<Save, Long> {
     List<Save> findByUser(User user);
     @Query(value = "SELECT s FROM Save s WHERE s.user = :user ORDER BY s.saveId DESC")
     List<Save> findAllByUserPag(User user, Pageable pageable);
-    @Query(value = "SELECT s FROM Save s WHERE s.user = :user AND s.id <= :cursor ORDER BY s.saveId DESC")
+    @Query(value = "SELECT s FROM Save s WHERE s.user = :user AND s.id < :cursor ORDER BY s.saveId DESC")
     List<Save> findAllByUser(User user, Long cursor, Pageable pageable);
     Optional<Save> findByUserAndPost(User user, Post post);
     void removeBySaveId(Long id);

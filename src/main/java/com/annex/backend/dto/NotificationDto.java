@@ -12,4 +12,5 @@ public class NotificationDto {
     private String imageUrl;
     private String toUrl;
     private boolean seen;
+    private String createdAt;
 }

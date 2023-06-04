@@ -44,7 +44,7 @@ Then, we need to modify our JPA dialect.
       hibernate:
         dialect: org.hibernate.dialect.your_dialect_here
         
-For example, if I want to use MySQL, I will need to type in "org.hibernate.dialect.MySQL8Dialect".
+For example, if you want to use MySQL, you will need to type in "org.hibernate.dialect.MySQL8Dialect".
 
 #### Using the JWT tokens.
 Inside the application.yaml file, there is also a field for RSA keys used by our JWT encrypter and decrypter.

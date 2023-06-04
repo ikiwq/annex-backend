@@ -87,6 +87,7 @@ public class AuthService {
         return new ResponseEntity<>("User Registration Successful!", HttpStatus.OK);
     }
 
+    //Ignore. That was part of an old email verification system.
     @Transactional
     public ResponseEntity<String> verifyAccount(String string){
         VerificationToken verificationToken = verificationTokenRepository.findByToken(string).orElseThrow(()-> new IllegalStateException("Token not found"));
@@ -105,7 +106,7 @@ public class AuthService {
     }
 
     public ResponseEntity login(@RequestBody LoginRequest loginRequest, HttpServletResponse httpServletResponse){
-
+        //By creating a username and password authentication token we can use BCrypt's encryption and decryption system
         UsernamePasswordAuthenticationToken userToLog =
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsercred(), loginRequest.getPassword());
 
@@ -122,12 +123,14 @@ public class AuthService {
             return new ResponseEntity<String>("Wrong credentials", HttpStatus.BAD_REQUEST);
         }
 
+        //If the login is successful, we can set the security context.
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String AuthToken = jwtProvider.generateToken(authentication);
 
         AuthenticationResponse newAuth = new AuthenticationResponse();
 
+        //Once we are logged in, we can generate a new auth token and a new refresh token.
         Cookie authCookie = new Cookie("annex.auth", AuthToken);
         authCookie.setHttpOnly(true);
         httpServletResponse.addCookie(authCookie);
@@ -148,6 +151,8 @@ public class AuthService {
         Cookie refreshCookie = null;
         Cookie authCookie = null;
 
+        //When logging out, we need to invalidate the tokens.
+        //First, we get the authentication and the refresh tokens.
         if(cookies != null && cookies.length > 0){
             for (Cookie temp : cookies){
                 if("annex.refresh".equals(temp.getName())){
@@ -159,7 +164,9 @@ public class AuthService {
             }
         }
 
+        //And then we set the max age to zero and invalidate its content
         if(refreshCookie != null){
+            //Also, delete the refresh token.
             refreshTokenService.deleteRefreshToken(refreshCookie.getValue());
             refreshCookie.setMaxAge(0);
             refreshCookie.setValue("");

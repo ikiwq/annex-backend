@@ -27,17 +27,20 @@ public class LikeService {
         Post postToLike = postRepository.findById(id).orElseThrow(() -> new IllegalStateException("Post not found"));
         Optional<LikeVote> possibleLike =  likeRepository.findByUserAndPost(userService.getCurrentUser(), postToLike);
 
+        //If the like is already present, then delete it.
         if(possibleLike.isPresent()){
             likeRepository.removeByLikeId(possibleLike.get().getLikeId());
 
             return new ResponseEntity<String>("Post like deleted", HttpStatus.OK);
         }else{
+            //If not, create it.
             LikeVote likeVote = new LikeVote();
             likeVote.setPost(postToLike);
             likeVote.setUser(userService.getCurrentUser());
             likeVote.setCreatedAt(Instant.now());
             likeRepository.save(likeVote);
 
+            //Create a new notification to the post author.
             notificationService.createNotification(postToLike.getUser(), userService.getCurrentUser().getUsername() + " liked your post!",
                     userService.getCurrentUser().getProfilePicture().getPath(), "/post/" + postToLike.getPostId());
         }

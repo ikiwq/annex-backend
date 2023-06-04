@@ -37,12 +37,12 @@ public class FollowService {
         }
 
         Follow follow = followRepository.findFollow(follower, following).orElse(null);
-
+        //If the follow exists, remove it.
         if(follow != null){
             followRepository.deleteById(follow.getFollowId());
             return new ResponseEntity<String>("Follow removed", HttpStatus.OK);
         }
-
+        //If it doesn't, create one.
         Follow newFollow = new Follow();
 
         newFollow.setFollowing(following);
@@ -51,6 +51,7 @@ public class FollowService {
 
         followRepository.save(newFollow);
 
+        //Make a notification for the user followed.
         notificationService.createNotification(following, follower.getUsername() + " followed you!",
                 userService.getCurrentUser().getProfilePicture().getPath(), "/profile/" + follower.getUsername());
 

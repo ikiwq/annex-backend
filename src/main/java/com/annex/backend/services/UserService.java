@@ -101,10 +101,13 @@ public class UserService {
     @Transactional
     public ResponseEntity<List<UserResponse>> getSuggested(){
         Pageable pageable = PageRequest.of(0, 5);
+        //If the user is logged in, we don't want to suggest him his own followers or his own account.
         if(SecurityContextHolder.getContext().getAuthentication().getPrincipal() != "anonymousUser"){
+            //The findSuggested methods accepts a user model that in this case is actually the current logged-in user's one.
             List<UserResponse> suggestedUsers = userRepository.findSuggested(getCurrentUser(), pageable).stream().map(this::userToUserDto).collect(Collectors.toList());
             return new ResponseEntity<List<UserResponse>>(suggestedUsers, HttpStatus.OK);
         }else{
+            //If the user is not logged in, just return without any checks the most followed.
             List<UserResponse> suggestedUsers = userRepository.findAllOrderByFollowing(pageable).stream().map(this::userToUserDto).collect(Collectors.toList());
             return new ResponseEntity<List<UserResponse>>(suggestedUsers, HttpStatus.OK);
         }

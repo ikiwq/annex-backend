@@ -56,6 +56,7 @@ public class NotificationService {
     }
 
     public CursorNotificationsResponse getCurrentUserNotification(Long cursor, int pageSize){
+        //Check if the user is loged in.
         if(userService.getCurrentUser() == null){
             throw new IllegalStateException("User is not logged in");
         }

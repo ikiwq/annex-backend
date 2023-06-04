@@ -16,9 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT user from User user WHERE NOT EXISTS (SELECT us from User u join u.following fl JOIN fl.following us WHERE u = :user AND user = us) AND user <> :user")
     List<User> findSuggested(User user, Pageable pageable);
 
-    @Query("SELECT us from User u join u.following fl JOIN fl.following us WHERE u = :user")
-    List<User> findFollowed(User user);
-
     @Query("SELECT u from User u WHERE u.username LIKE %:username%")
     List<User> searchUsers(String username, Pageable pageable);
 

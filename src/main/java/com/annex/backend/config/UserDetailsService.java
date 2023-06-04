@@ -23,6 +23,7 @@ public class UserDetailsService implements org.springframework.security.core.use
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String loginName) throws UsernameNotFoundException {
+        //Find the user. If it isn't present, throw a new Exception.
         Optional<User> user= userRepository.findByUsername(loginName);
         if(!user.isPresent()){
             user = userRepository.findByEmail(loginName);
@@ -31,6 +32,7 @@ public class UserDetailsService implements org.springframework.security.core.use
 
         User currentUser = user.get();
 
+        //Return a new UserDetails class with the newly retrieved user.
         return new org.springframework.security.core.userdetails.User(currentUser.getEmail(),
                 currentUser.getPassword(), currentUser.isEnabled(),
                 true, true, !currentUser.isLocked(), getAuthorities("USER"));

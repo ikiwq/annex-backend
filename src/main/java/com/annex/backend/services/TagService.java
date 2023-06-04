@@ -34,9 +34,13 @@ public class TagService {
         Pageable pageable = PageRequest.of(0, numberOfTags);
         List<TagDto> tagList = tagRepository.findMostPopular(Instant.now().minus(24, ChronoUnit.HOURS), pageable).stream().map(this::mapToDto).collect(Collectors.toList());
         if(tagList.size() < numberOfTags){
+            //The frontend expects at least 10 new tags. If the number of tags popular
+            //in the last 24 is less than 10, just retrieve the
+            //most popular of all time.
             int compensate = numberOfTags - tagList.size();
             Pageable pag = PageRequest.of(0, compensate);
             List<TagDto> secondTagList = tagRepository.findWithMostLikes(pag).stream().map(this::mapToDto).collect(Collectors.toList());
+            //Avoid duplicates by checking if the tag is already here.
             for(TagDto tag : secondTagList){
                 if(!tagList.contains(tag)){
                     tagList.add(tag);

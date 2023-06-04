@@ -29,6 +29,7 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken validateRefreshToken(String token){
+        //The refresh tokens are saved inside the database.
         return refreshTokenRepository.findByToken(token)
                 .orElseThrow(()-> new IllegalStateException("Invalid refresh Token"));
     }

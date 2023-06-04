@@ -28,39 +28,20 @@ public class ImageService {
     private ImageUtil imageUtil;
 
     @Transactional
-    public Image uploadImageWithoutUser(MultipartFile image){
-        Image newImage = new Image();
-        if (!image.getContentType().split("/")[0].equals("image")) {
-            throw new RuntimeException("File is not an image");
-        }
-        try {
-
-            newImage.setPath(UUID.randomUUID().toString());
-            newImage.setData(imageUtil.compressImage(image.getBytes()));
-            newImage.setType(image.getContentType());
-            newImage.setUplaodedAt(Instant.now());
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        return imageRepository.save(newImage);
-    }
-
-    @Transactional
     public Image uploadImage(MultipartFile image, User uploader) {
         Image newImage = new Image();
         if (!image.getContentType().split("/")[0].equals("image")) {
             throw new RuntimeException("File is not an image");
         }
         try {
-
+            //the path to the image ex: https://localhost/api/image/path_to_image
+            //will be a new UUID. Since the possibility of 2 UUIDs being the same is
+            //ruffly 0.00000000006%. I guess that is safe without checking for duplicates C:
             newImage.setPath(UUID.randomUUID().toString());
             newImage.setData(imageUtil.compressImage(image.getBytes()));
             newImage.setType(image.getContentType());
             newImage.setUser(uploader);
             newImage.setUplaodedAt(Instant.now());
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

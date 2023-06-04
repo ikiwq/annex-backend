@@ -12,7 +12,7 @@ import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
-
+//Ignore. Was part of an old email confirmation system.
 @Service
 @AllArgsConstructor
 public class TokenService {

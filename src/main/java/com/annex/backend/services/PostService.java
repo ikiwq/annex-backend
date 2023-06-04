@@ -57,6 +57,9 @@ public class PostService {
 
         String message = post.getMessage();
 
+        //The messages are saved inside the database as plain text.
+        //The message is parsed on the frontend side, replacing the
+        //mention with a <a> tag directing to the user's profile.
         String patternStr2 = "(?:\\s|\\A)@+([A-Za-z0-9-_]+)";
         Pattern pattern2 = Pattern.compile(patternStr2);
         Matcher matcher2 = pattern2.matcher(message);
@@ -66,6 +69,9 @@ public class PostService {
             result2 = matcher2.group();
             result2 = result2.replace(" ", "");
             String search = result2.replace("@", "");
+
+            //To avoid redirecting to a user's page that doesn't exist,
+            //just remove the @ if the user with that name doesn't exist
             if(userRepository.findByUsername(search).isEmpty()){
                 message = message.replace(result2, search);
             }
@@ -76,6 +82,8 @@ public class PostService {
         postResponse.setMessage(message);
 
         postResponse.setCreator(post.getUser().getUsername());
+
+        //Format the images so that they can be read from the backend side
         postResponse.setCreatorImage(propertiesService.backendAddress + "api/images/" + post.getUser().getProfilePicture().getPath());
 
         if(post.getImageUrls() != null){
@@ -88,6 +96,8 @@ public class PostService {
             postResponse.setImageUrls(imgUrls);
         }
 
+        //If there's a post that we are replying at, then we need
+        //to set it in the response
         if(post.getReplyingAt() != null){
             postResponse.setReply(true);
             postResponse.setReplyingToUser(post.getReplyingAt().getUser().getUsername());
@@ -114,16 +124,20 @@ public class PostService {
             postResponse.setSaveCount(0);
         }
 
+        //Date formatting
         if(post.getCreatedAt().isBefore(Instant.now().minus(364, ChronoUnit.DAYS))){
             postResponse.setCreatedAt(DateTimeFormatter.ofPattern("MMM dd yyyy").withZone(ZoneId.systemDefault()).format(post.getCreatedAt()));
         }else if(post.getCreatedAt().isBefore(Instant.now().minus(24, ChronoUnit.HOURS))){
             postResponse.setCreatedAt(DateTimeFormatter.ofPattern("MMM dd").withZone(ZoneId.systemDefault()).format(post.getCreatedAt()) + " at " +
                     DateTimeFormatter.ofPattern("hh:mm").withZone(ZoneId.systemDefault()).format(post.getCreatedAt()));
         }else{
+            //If the creation date < 24h, don't simply display the entire date.
+            //Just display, for example, "50 seconds ago"
             PrettyTime prettyTime = new PrettyTime();
             postResponse.setCreatedAt(prettyTime.format(Date.from(post.getCreatedAt())));
         }
 
+        //If the user has logged in, we can check if he saved or liked the post.
         if(SecurityContextHolder.getContext().getAuthentication().getPrincipal() != "anonymousUser"){
             User currentUser = userService.getCurrentUser();
 
@@ -141,6 +155,9 @@ public class PostService {
 
     @Transactional
     public PostResponse save(String jsonString, MultipartFile[] images, Long replying_to){
+        //Since the post will have an image and a text, to avoid making two requests,
+        //we can just append to the FormData the files and then a json string that will be
+        //parsed by the object mapper.
         ObjectMapper mapper = new ObjectMapper();
 
         Post newPost = new Post();
@@ -149,9 +166,11 @@ public class PostService {
         HashSet<String> users = new HashSet<>();
 
         try{
+            //Parse the json.
             PostRequest postRequest = mapper.readValue(jsonString, PostRequest.class);
             String message = postRequest.getMessage();
 
+            //This regex will detect any hashtags.
             String patternStr = "(?:\\s|\\A)#+([A-Za-z0-9-_]+)";
             Pattern pattern = Pattern.compile(patternStr);
             Matcher matcher = pattern.matcher(message);
@@ -161,10 +180,12 @@ public class PostService {
                 result = matcher.group();
                 result = result.replace(" ", "");
 
+                //If a hashtag is detected, add it to the hashset.
                 String search = result.replace("#", "");
                 hashtags.add(search);
             }
 
+            //This regex will detect any mentions.
             String patternStr2 = "(?:\\s|\\A)@+([A-Za-z0-9-_]+)";
             Pattern pattern2 = Pattern.compile(patternStr2);
             Matcher matcher2 = pattern2.matcher(message);
@@ -173,6 +194,8 @@ public class PostService {
             while (matcher2.find()) {
                 result2 = matcher2.group();
                 result2 = result2.replace(" ", "");
+
+                //If a mention is detected, add it to the hashset.
                 String search = result2.replace("@", "");
                 users.add(search);
             }
@@ -187,6 +210,7 @@ public class PostService {
 
         Post toReply = null;
 
+        //If the user is replying to a post, check if it exists.
         if(replying_to != -1){
             toReply = postRepository.findById(replying_to).orElseThrow(()-> new RuntimeException("Post not found"));
             if(toReply.getUser() != userService.getCurrentUser()){
@@ -211,12 +235,13 @@ public class PostService {
 
         for(String hash : hashtags){
             Tag tag = null;
-
+            //If the user has specified hashtags inside the post, we need to create a new TagPost class.
             if(tagRepository.findByTagName(hash).isEmpty()){
                 tag = new Tag();
                 tag.setTagName(hash);
                 tag = tagRepository.save(tag);
             }else{
+                //If the Tag with that name doesn't exist, we need to make one.
                 tag = tagRepository.findByTagName(hash).get();
             }
 
@@ -227,6 +252,7 @@ public class PostService {
 
         Post publishedPost = postRepository.save(newPost);
 
+        //For every mention inside the post, make a new notification
         for(String user : users){
             Optional<User> receiver = userRepository.findByUsername(user);
             if(receiver.isPresent()){
@@ -236,6 +262,7 @@ public class PostService {
             }
         }
 
+        //if we are replying to someone, we also need to make a new notification.
         if(replying_to != -1){
             notificationService.createNotification(toReply.getUser(), userService.getCurrentUser().getUsername() + " replied to your post!",
                     userService.getCurrentUser().getProfilePicture().getPath(), "/post/" + publishedPost.getPostId());

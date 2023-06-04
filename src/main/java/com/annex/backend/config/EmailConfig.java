@@ -6,7 +6,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thymeleaf.TemplateEngine;
 
 import java.util.Properties;
-
+//Ignore. That was part of an email confirmation system.
 @Configuration
 public class EmailConfig {
     @Bean

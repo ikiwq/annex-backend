@@ -41,7 +41,7 @@ The first one:
       password: your_passowrd
 Then, we need to modify our JPA dialect.
 
-      hibernate:
+    hibernate:
         dialect: org.hibernate.dialect.your_dialect_here
         
 For example, if you want to use MySQL, you will need to type in "org.hibernate.dialect.MySQL8Dialect".

@@ -6,6 +6,10 @@ Annex is an open source social network inspired by major websites like Facebook 
 
 This is the backend repository, and the frontend repository can be found [here](https://github.com/ikiwq/new-annex-frontend).
 
+#### Built with
+[![My Skills](https://skillicons.dev/icons?i=java,spring&theme=light)](https://skillicons.dev)
+
+
 ## Installation
 ### Getting the files and the requisites
 Clone the repository:

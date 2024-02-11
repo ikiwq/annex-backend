@@ -1,9 +1,7 @@
 # Annex
-## Introduction
+### Overview
 
 Annex is an open source social network inspired by major websites like Facebook and Twitter. This project was meant to empower users by providing them with a platform where they can trust that their data is handled responsibly and ethically.
-#### Source code
-
 This is the backend repository, and the frontend repository can be found [here](https://github.com/ikiwq/new-annex-frontend).
 
 #### Built with
@@ -63,25 +61,4 @@ Start the application:
 
     mvn spring-boot:run
       
-Access the application in your web browser at http://localhost:8080 or the port you specified in the application.yaml file, and you're ready to go!
-
-## In depth into the code
-This backend application supports cursor pagination. It's crucial to use cursor pagination since we are dealing with a social network that (should) handle thousands of new posts every minute, and a simple pagination would give us a lot of problems, such as duplicates.
-
-The majority of services support simple cursor pagination by using post ids. Once the frontend receives a list of posts, it will take the last received one's id, and use it as a cursor.
-But some services, such as liked and saved posts or the notification one, can't simply handle an aricle id as their cursor. 
-
-The liked and saved elements are sorted by their creation date, not by the post they "contain". Since saves and likes are relationships inside the database, they have their own ids, which we can use for our pagination purposes.
-Inside the DTOs folder, there's a CursorPostResponse.
-
-    public class CursorPostsResponse {
-        List<PostResponse> posts;
-        Long cursor;
-    }
- 
-It contains a list of posts and a cursor.
-For example, a function that returns a user's liked posts would do:
-
-     cursor = cursorLikes.get(0).getLikeId() + 1;
-     
- As I said before, we will take the ID from the relationship, not the posts, and send it to the frontend with the posts.
+Access the application in your web browser at http://localhost:8080 or the port you specified in the application.yaml file, and you're ready to go
